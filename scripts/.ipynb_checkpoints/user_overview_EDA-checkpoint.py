@@ -104,15 +104,26 @@ def top_handsets(df):
         plt.show()
 
 def user_aggregation_metrics(df):
+    # Ensure the 'Start' and 'End' columns are in datetime format
+    df['Start'] = pd.to_datetime(df['Start'])
+    df['End'] = pd.to_datetime(df['End'])
+    
+    # Create new columns for total download and upload data across all apps
+    df['Total Download'] = df['Youtube DL (Bytes)'] + df['Netflix DL (Bytes)'] + df['Gaming DL (Bytes)'] + df['Other DL (Bytes)']
+    df['Total Upload'] = df['Youtube UL (Bytes)'] + df['Netflix UL (Bytes)'] + df['Gaming UL (Bytes)'] + df['Other UL (Bytes)']
+
+    # Aggregate the data by MSISDN/Number (User)
     user_metrics = df.groupby('MSISDN/Number').agg({
         'Bearer Id': 'count',  # Number of sessions
         'Dur. (ms)': 'sum',  # Total session duration
-        'Total DL (Bytes)': 'sum',  # Total download data
-        'Total UL (Bytes)': 'sum',  # Total upload data
+        'Total Download': 'sum',  # Total download data across apps
+        'Total Upload': 'sum',  # Total upload data across apps
     }).reset_index()
 
-    user_metrics['Total Data Volume (Bytes)'] = user_metrics['Total DL (Bytes)'] + user_metrics['Total UL (Bytes)']
-    print(user_metrics.head())
+    # Adding total data volume (Download + Upload)
+    user_metrics['Total Data Volume (Bytes)'] = user_metrics['Total Download'] + user_metrics['Total Upload']
+    
+    
     return user_metrics
 
 def decile_segmentation(user_metrics):
