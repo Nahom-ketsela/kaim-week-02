@@ -45,8 +45,14 @@ def normalize_metrics(user_metrics):
     return normalized_df
 
 def apply_kmeans(normalized_metrics, k=3):
+    # Initialize the KMeans model
     kmeans = KMeans(n_clusters=k, random_state=42)
-    return kmeans.fit_predict(normalized_metrics)
+    
+    # Apply KMeans and get the cluster labels
+    cluster_labels = kmeans.fit_predict(normalized_metrics)
+    
+    # Return the cluster labels as a DataFrame (as a single column)
+    return pd.Series(cluster_labels, name='Cluster')
 
 # Cluster Analysis
 def analyze_clusters(user_metrics):
