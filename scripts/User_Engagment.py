@@ -121,11 +121,14 @@ def plot_top_applications(df):
     plt.show()
 
 
-
 # Elbow Method for Optimized K
-def elbow_method(normalized_metrics):
+def elbow_method(df, apps):
+    # Normalize/standardize the engagement metrics (application download traffic in this case)
+    scaler = StandardScaler()
+    normalized_metrics = scaler.fit_transform(df[apps])
+
     distortions = []
-    K = range(1, 10)
+    K = range(1, 11)  # You can extend this range for more granularity
     for k in K:
         kmeans = KMeans(n_clusters=k, random_state=42)
         kmeans.fit(normalized_metrics)
@@ -133,8 +136,13 @@ def elbow_method(normalized_metrics):
 
     # Plot the elbow curve
     plt.figure(figsize=(8, 5))
-    plt.plot(K, distortions, marker='o')
+    plt.plot(K, distortions, marker='o', linestyle='-', color='b')
     plt.title("Elbow Method for Optimal K")
-    plt.xlabel("Number of Clusters")
-    plt.ylabel("Distortion")
+    plt.xlabel("Number of Clusters (k)")
+    plt.ylabel("Distortion (Inertia)")
+    plt.xticks(K)
+    plt.grid(True)
     plt.show()
+
+    # Output the distortion values to analyze
+    return distortions
