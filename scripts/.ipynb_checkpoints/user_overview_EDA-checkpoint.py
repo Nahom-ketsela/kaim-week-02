@@ -140,12 +140,22 @@ def univariate_analysis(df):
         plt.show()
 
 def bivariate_analysis(df):
+    # Create a new column for Total Data Volume
+    df['Total Data Volume (Bytes)'] = df['Total DL (Bytes)'] + df['Total UL (Bytes)']
+    
+    # List of application-specific data columns to analyze
     apps = ['Social Media DL (Bytes)', 'Google DL (Bytes)', 'Email DL (Bytes)',
             'Youtube DL (Bytes)', 'Netflix DL (Bytes)', 'Gaming DL (Bytes)', 'Other DL (Bytes)']
+    
+    # Plot each app's download data against Total Data Volume
     for app in apps:
-        sns.scatterplot(data=df, x=app, y='Total DL (Bytes) + Total UL (Bytes)')
+        plt.figure(figsize=(8, 6))
+        sns.scatterplot(data=df, x=app, y='Total Data Volume (Bytes)')
         plt.title(f"{app} vs Total Data Volume")
+        plt.xlabel(app)
+        plt.ylabel('Total Data Volume (Bytes)')
         plt.show()
+
 
 def application_correlation_analysis(df):
     app_data = df[['Social Media DL (Bytes)', 'Google DL (Bytes)', 'Email DL (Bytes)',
