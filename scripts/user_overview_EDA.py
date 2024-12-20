@@ -49,23 +49,20 @@ def handle_missing_values(df, unique_identifiers=None):
 
     return df
 
-
-def treat_outliers(df, columns_to_check):
-    for col in columns_to_check:
+def treat_outliers(df):
+    # Loop through all columns in the DataFrame
+    for col in df.select_dtypes(include=['number']).columns:
         Q1 = df[col].quantile(0.25)
         Q3 = df[col].quantile(0.75)
         IQR = Q3 - Q1
         lower_bound = Q1 - 1.5 * IQR
         upper_bound = Q3 + 1.5 * IQR
+        
+        # Treat the outliers by setting values outside the bounds to the corresponding bound
         df[col] = np.where(df[col] > upper_bound, upper_bound, 
                            np.where(df[col] < lower_bound, lower_bound, df[col]))
-
-def plot_correlation_matrix(df):
-    correlation_matrix = df.corr()
-    plt.figure(figsize=(16, 10))
-    sns.heatmap(correlation_matrix, annot=False, cmap='coolwarm')
-    plt.title("Correlation Matrix")
-    plt.show()
+    
+    return df
 
 def top_handsets(df):
     top_10_handsets = df['Handset Type'].value_counts().head(10)
