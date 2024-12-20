@@ -55,20 +55,30 @@ def apply_kmeans(normalized_metrics, k=3):
     return pd.Series(cluster_labels, name='Cluster')
 
 # Cluster Analysis
-def analyze_clusters(user_metrics):
+def analyze_clusters(user_metrics, normalized_metrics):
+    # Apply KMeans clustering (assuming you want to reapply it here or pass the existing cluster labels)
+    cluster_labels = apply_kmeans(normalized_metrics)
+    
+    # Add the cluster labels as a new column in user_metrics
+    user_metrics['Cluster'] = cluster_labels
+    
+    # Group by the 'Cluster' column and calculate min, max, mean, and sum for each column
     cluster_summary = user_metrics.groupby('Cluster').agg({
         'Bearer Id': ['min', 'max', 'mean', 'sum'],
         'Dur. (ms)': ['min', 'max', 'mean', 'sum'],
         'Total Traffic (Bytes)': ['min', 'max', 'mean', 'sum']
     })
+    
     print(cluster_summary)
 
+    # Plot the distribution of users across clusters
     plt.figure(figsize=(10, 6))
     sns.countplot(data=user_metrics, x='Cluster')
     plt.title("Distribution of Users Across Clusters")
     plt.xlabel("Cluster")
     plt.ylabel("Number of Users")
     plt.show()
+
 
 # Application-Based Engagement
 def top_application_users(df):
