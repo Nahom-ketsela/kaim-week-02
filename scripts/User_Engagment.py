@@ -30,9 +30,19 @@ def report_top_users(user_metrics):
 
 # Normalize Metrics and Apply K-Means
 def normalize_metrics(user_metrics):
+    # Define the columns to be normalized
+    columns_to_normalize = ['Bearer Id', 'Dur. (ms)', 'Total Traffic (Bytes)']
+    
+    # Initialize the MinMaxScaler
     scaler = MinMaxScaler()
-    normalized_metrics = scaler.fit_transform(user_metrics[['Bearer Id', 'Dur. (ms)', 'Total Traffic (Bytes)']])
-    return normalized_metrics
+    
+    # Fit and transform the data
+    normalized_metrics = scaler.fit_transform(user_metrics[columns_to_normalize])
+    
+    # Create a DataFrame with the normalized data
+    normalized_df = pd.DataFrame(normalized_metrics, columns=columns_to_normalize)
+    
+    return normalized_df
 
 def apply_kmeans(normalized_metrics, k=3):
     kmeans = KMeans(n_clusters=k, random_state=42)
