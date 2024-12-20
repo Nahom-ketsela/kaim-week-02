@@ -92,16 +92,35 @@ def top_application_users(df):
 
     return app_engagement
 
-def plot_top_apps(df):
-    apps = ['Social Media DL (Bytes)', 'Youtube DL (Bytes)', 'Netflix DL (Bytes)']
+    
+# Function to plot the top 3 most used applications based on total traffic
+def plot_top_applications(df):
+    # Define the list of applications
+    apps = ['Social Media DL (Bytes)', 'Google DL (Bytes)', 'Email DL (Bytes)',
+            'Youtube DL (Bytes)', 'Netflix DL (Bytes)', 'Gaming DL (Bytes)', 'Other DL (Bytes)']
+    
+    # Sum the traffic for each application
     total_app_traffic = df[apps].sum()
-
+    
+    # Sort the total traffic in descending order and get the top 3
+    top_3_apps = total_app_traffic.nlargest(3)
+    
+    # Set up the plot
     plt.figure(figsize=(10, 6))
-    sns.barplot(x=total_app_traffic.index, y=total_app_traffic.values, palette="viridis")
-    plt.title("Top 3 Most Used Applications")
-    plt.xlabel("Application")
-    plt.ylabel("Total Traffic (Bytes)")
+    
+    # Create a barplot for the top 3 applications
+    sns.barplot(x=top_3_apps.index, y=top_3_apps.values, palette="viridis")
+    
+    # Adding titles and labels
+    plt.title("Top 3 Most Used Applications", fontsize=16)
+    plt.xlabel("Application", fontsize=12)
+    plt.ylabel("Total Traffic (Bytes)", fontsize=12)
+    
+    # Display the plot
+    plt.tight_layout()
     plt.show()
+
+
 
 # Elbow Method for Optimized K
 def elbow_method(normalized_metrics):
