@@ -64,16 +64,44 @@ def treat_outliers(df):
     
     return df
 
+#function to find the top handsets
 def top_handsets(df):
+    # Get top 10 handsets based on their count
     top_10_handsets = df['Handset Type'].value_counts().head(10)
     print("Top 10 Handsets:\n", top_10_handsets)
 
+    # Plot top 10 handsets without the 'palette' argument
+    plt.figure(figsize=(10, 6))
+    sns.barplot(x=top_10_handsets.values, y=top_10_handsets.index)
+    plt.title("Top 10 Handsets")
+    plt.xlabel("Count")
+    plt.ylabel("Handset Type")
+    plt.show()
+
+    # Get top 3 manufacturers based on their count
     top_3_manufacturers = df['Handset Manufacturer'].value_counts().head(3)
     print("Top 3 Handset Manufacturers:\n", top_3_manufacturers)
 
+    # Plot top 3 manufacturers without the 'palette' argument
+    plt.figure(figsize=(10, 6))
+    sns.barplot(x=top_3_manufacturers.values, y=top_3_manufacturers.index)
+    plt.title("Top 3 Handset Manufacturers")
+    plt.xlabel("Count")
+    plt.ylabel("Manufacturer")
+    plt.show()
+
+    # For each manufacturer, plot top 5 handsets for that manufacturer
     for manufacturer in top_3_manufacturers.index:
         top_5_handsets = df[df['Handset Manufacturer'] == manufacturer]['Handset Type'].value_counts().head(5)
         print(f"Top 5 Handsets for {manufacturer}:\n", top_5_handsets)
+
+        # Plot top 5 handsets for the current manufacturer without the 'palette' argument
+        plt.figure(figsize=(10, 6))
+        sns.barplot(x=top_5_handsets.values, y=top_5_handsets.index)
+        plt.title(f"Top 5 Handsets for {manufacturer}")
+        plt.xlabel("Count")
+        plt.ylabel("Handset Type")
+        plt.show()
 
 def user_aggregation_metrics(df):
     user_metrics = df.groupby('MSISDN/Number').agg({
