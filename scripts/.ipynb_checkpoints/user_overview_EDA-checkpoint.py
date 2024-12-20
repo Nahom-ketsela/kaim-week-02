@@ -10,10 +10,45 @@ def basic_data_overview(df):
     print(df.info())
     print(df.describe())
 
-def handle_missing_values(df):
-    # Fill missing values
-    df.fillna(df.mean(numeric_only=True), inplace=True)
-    df.fillna(df.mode().iloc[0], inplace=True)  # For categorical columns
+    
+def handle_missing_values(df, unique_identifiers=None):
+    """
+    Function to handle missing values in a DataFrame based on column types.
+
+    Parameters:
+    - df: DataFrame containing the data.
+    - unique_identifiers: List of column names that should not be imputed (e.g., unique identifiers like 'Bearer Id').
+    """
+    if unique_identifiers is None:
+        unique_identifiers = []
+
+    # Handle numerical columns
+    numerical_columns = df.select_dtypes(include=['number']).columns
+    for col in numerical_columns:
+        if col not in unique_identifiers:
+            # Replace missing values with mean for numerical columns
+            df[col] = df[col].fillna(df[col].mean())
+    
+    # Handle categorical columns
+    categorical_columns = df.select_dtypes(include=['object', 'category']).columns
+    for col in categorical_columns:
+        if col not in unique_identifiers:
+            # Replace missing values with mode (most frequent value) for categorical columns
+            df[col] = df[col].fillna(df[col].mode().iloc[0])
+
+   # Handle unique identifier columns (drop rows with missing values)
+    for col in unique_identifiers:
+        print(f"Checking column '{col}' for NaN values...")
+        # Ensure the column exists and check for NaNs
+        if col in df.columns:
+            print(f"NaN values in '{col}': {df[col].isna().sum()}")
+            # Drop rows where the unique identifier column has missing values
+            df.dropna(subset=[col], inplace=True)
+        else:
+            print(f"Column '{col}' not found in the DataFrame.")
+
+    return df
+
 
 def treat_outliers(df, columns_to_check):
     for col in columns_to_check:
