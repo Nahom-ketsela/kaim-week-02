@@ -40,6 +40,7 @@ def aggregate_per_customer(df):
 
     return agg_df
 
+
 def compute_and_display_stats(data, columns_of_interest, top_n=10):
     """
     Computes and displays top, bottom, and most frequent values for specified columns.
@@ -85,33 +86,48 @@ def compute_and_display_stats(data, columns_of_interest, top_n=10):
         print(stats['Most Frequent'])
 
     return results
-    
-def distribution_per_handset(df, metric_column, handset_column):
+
+
+def distribution_per_handset(df, metric_column, handset_column, title, ylabel, top_n=10):
     """
-    Compute the distribution of a metric per handset type.
+    Compute the distribution of a metric per handset type, limited to top N handsets for better visualization.
 
     Parameters:
         df (pd.DataFrame): Input DataFrame.
         metric_column (str): Column name for the metric.
         handset_column (str): Column name for the handset type.
+        title (str): Title for the plot.
+        ylabel (str): Label for the y-axis.
+        top_n (int): Limit to the top N handsets by the mean of the metric.
 
     Returns:
-        pd.DataFrame: Aggregated distribution DataFrame.
+        pd.DataFrame: Aggregated distribution DataFrame with limited handset types.
     """
+    # Calculate the mean distribution per handset type
     distribution = df.groupby(handset_column)[metric_column].mean().reset_index()
 
-    plt.figure(figsize=(12, 6))
-    sns.barplot(x=handset_column, y=metric_column, data=distribution, palette="viridis")
-    plt.title(f"Distribution of {metric_column} per Handset Type", fontsize=16)
-    plt.xlabel("Handset Type", fontsize=12)
-    plt.ylabel(f"Average {metric_column}", fontsize=12)
-    plt.xticks(rotation=45, ha='right')
+    # Sort the distribution and select top N handset types
+    distribution_sorted = distribution.sort_values(by=metric_column, ascending=False).head(top_n)
+
+    # Create a horizontal bar plot for better readability
+    plt.figure(figsize=(10, 6))  # Adjusted size for clarity
+    sns.barplot(x=metric_column, y=handset_column, data=distribution_sorted, palette="viridis")
+
+    # Add title and labels with larger fonts
+    plt.title(title, fontsize=16)
+    plt.xlabel(ylabel, fontsize=14)
+    plt.ylabel("Handset Type", fontsize=14)
+
+    # Add value labels on bars for easier interpretation
+    for index, value in enumerate(distribution_sorted[metric_column]):
+        plt.text(value + 0.5, index, f'{value:.2f}', va='center', fontsize=12)
+
+    # Adjust layout to avoid overlap and improve clarity
     plt.tight_layout()
     plt.show()
 
-    return distribution
-
-
+    return distribution_sorted
+    
 def kmeans_clustering_experience(df, k=3):
     """
     Perform K-means clustering on user experience metrics and visualize the clusters.
@@ -124,7 +140,7 @@ def kmeans_clustering_experience(df, k=3):
         pd.DataFrame: DataFrame with cluster assignments.
         KMeans: Fitted KMeans model.
     """
-    features = ['Average Throughput', 'Average TCP Retransmission', 'Average RTT']
+    features = ['Average Throughput DL', 'Average TCP Retransmission DL', 'Average RTT DL']
 
     # Handle missing values
     df[features] = df[features].fillna(df[features].mean())
@@ -139,20 +155,21 @@ def kmeans_clustering_experience(df, k=3):
 
     # Plot clusters
     plt.figure(figsize=(8, 6))
-    sns.scatterplot(x=df['Average Throughput'], 
-                    y=df['Average TCP Retransmission'], 
+    sns.scatterplot(x=df['Average Throughput DL'], 
+                    y=df['Average TCP Retransmission DL'], 
                     hue=df['Cluster'], 
                     palette='viridis', 
                     s=100, 
                     alpha=0.8)
-    plt.title('K-means Clustering of Users (K=3)', fontsize=16)
-    plt.xlabel('Average Throughput', fontsize=12)
-    plt.ylabel('Average TCP Retransmission', fontsize=12)
+    plt.title(f'K-means Clustering of Users (K={k})', fontsize=16)
+    plt.xlabel('Average Throughput DL', fontsize=12)
+    plt.ylabel('Average TCP Retransmission DL', fontsize=12)
     plt.legend(title='Cluster', fontsize=10)
     plt.tight_layout()
     plt.show()
 
     return df, kmeans
+
 
 def interpret_clusters(df):
     """
@@ -165,10 +182,11 @@ def interpret_clusters(df):
         pd.DataFrame: Cluster interpretation.
     """
     cluster_summary = df.groupby('Cluster').agg({
-        'Average Throughput': 'mean',
-        'Average TCP Retransmission': 'mean',
-        'Average RTT': 'mean'
+        'Average Throughput DL': 'mean',
+        'Average TCP Retransmission DL': 'mean',
+        'Average RTT DL': 'mean'
     }).reset_index()
 
     print("Cluster Summary:\n", cluster_summary)
     return cluster_summary
+
