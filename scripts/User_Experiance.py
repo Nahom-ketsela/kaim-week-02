@@ -4,7 +4,7 @@ from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 import seaborn as sns
-
+from sklearn.decomposition import PCA
 
 def aggregate_per_customer(df):
     """
@@ -140,7 +140,8 @@ def kmeans_clustering_experience(df, k=3):
         pd.DataFrame: DataFrame with cluster assignments.
         KMeans: Fitted KMeans model.
     """
-    features = ['Average Throughput DL', 'Average TCP Retransmission DL', 'Average RTT DL']
+    # Columns to use for clustering
+    features = ['Throughput_DL', 'TCP_DL', 'RTT_DL']
 
     # Handle missing values
     df[features] = df[features].fillna(df[features].mean())
@@ -153,17 +154,18 @@ def kmeans_clustering_experience(df, k=3):
     kmeans = KMeans(n_clusters=k, random_state=42)
     df['Cluster'] = kmeans.fit_predict(standardized_data)
 
+    # PCA for visualization
+    pca = PCA(n_components=2)
+    pca_data = pca.fit_transform(standardized_data)
+    df['PCA1'] = pca_data[:, 0]
+    df['PCA2'] = pca_data[:, 1]
+
     # Plot clusters
     plt.figure(figsize=(8, 6))
-    sns.scatterplot(x=df['Average Throughput DL'], 
-                    y=df['Average TCP Retransmission DL'], 
-                    hue=df['Cluster'], 
-                    palette='viridis', 
-                    s=100, 
-                    alpha=0.8)
+    sns.scatterplot(x='PCA1', y='PCA2', hue='Cluster', data=df, palette='viridis', s=100, alpha=0.8)
     plt.title(f'K-means Clustering of Users (K={k})', fontsize=16)
-    plt.xlabel('Average Throughput DL', fontsize=12)
-    plt.ylabel('Average TCP Retransmission DL', fontsize=12)
+    plt.xlabel('PCA Component 1', fontsize=12)
+    plt.ylabel('PCA Component 2', fontsize=12)
     plt.legend(title='Cluster', fontsize=10)
     plt.tight_layout()
     plt.show()
@@ -182,11 +184,10 @@ def interpret_clusters(df):
         pd.DataFrame: Cluster interpretation.
     """
     cluster_summary = df.groupby('Cluster').agg({
-        'Average Throughput DL': 'mean',
-        'Average TCP Retransmission DL': 'mean',
-        'Average RTT DL': 'mean'
+        'Throughput_DL': ['mean', 'std'],
+        'TCP_DL': ['mean', 'std'],
+        'RTT_DL': ['mean', 'std']
     }).reset_index()
 
     print("Cluster Summary:\n", cluster_summary)
     return cluster_summary
-
