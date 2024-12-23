@@ -5,10 +5,10 @@ from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# aggregate per customer 
+
 def aggregate_per_customer(df):
     """
-    Aggregate metrics per customer.
+    Aggregate metrics per customer, replacing missing values and handling outliers.
 
     Parameters:
         df (pd.DataFrame): Input DataFrame.
@@ -16,21 +16,29 @@ def aggregate_per_customer(df):
     Returns:
         pd.DataFrame: Aggregated DataFrame.
     """
+    
+    # Perform the aggregation
     agg_df = df.groupby('MSISDN/Number').agg({
-        'TCP Retransmission (Bytes)': 'mean',
-        'RTT (ms)': 'mean',
+        'TCP DL Retrans. Vol (Bytes)': 'mean',
+        'TCP UL Retrans. Vol (Bytes)': 'mean',
+        'Avg RTT DL (ms)': 'mean',
+        'Avg RTT UL (ms)': 'mean',
         'Handset Type': lambda x: x.mode()[0],
-        'Throughput (Bytes)': 'mean'
+        'Avg Bearer TP DL (kbps)': 'mean',
+        'Avg Bearer TP UL (kbps)': 'mean'
     }).reset_index()
 
+    # Rename columns to more user-friendly names
     agg_df.rename(columns={
-        'TCP Retransmission (Bytes)': 'Average TCP Retransmission',
-        'RTT (ms)': 'Average RTT',
-        'Throughput (Bytes)': 'Average Throughput'
+        'TCP DL Retrans. Vol (Bytes)': 'Average TCP Retransmission DL',
+        'TCP UL Retrans. Vol (Bytes)': 'Average TCP Retransmission UL',
+        'Avg RTT DL (ms)': 'Average RTT DL',
+        'Avg RTT UL (ms)': 'Average RTT UL',
+        'Avg Bearer TP DL (kbps)': 'Average Throughput DL',
+        'Avg Bearer TP UL (kbps)': 'Average Throughput UL'
     }, inplace=True)
 
     return agg_df
-
 
 def compute_top_bottom_frequent(df, column, n=10):
     """
