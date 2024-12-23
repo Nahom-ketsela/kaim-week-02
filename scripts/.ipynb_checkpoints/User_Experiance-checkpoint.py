@@ -40,29 +40,52 @@ def aggregate_per_customer(df):
 
     return agg_df
 
-def compute_top_bottom_frequent(df, column, n=10):
+def compute_and_display_stats(data, columns_of_interest, top_n=10):
     """
-    Compute top, bottom, and most frequent values in a column.
+    Computes and displays top, bottom, and most frequent values for specified columns.
 
     Parameters:
-        df (pd.DataFrame): Input DataFrame.
-        column (str): Column name to analyze.
-        n (int): Number of values to compute.
+        data (pd.DataFrame): The dataset containing the columns of interest.
+        columns_of_interest (dict): Mapping of original column names to aliases.
+        top_n (int): Number of top/bottom/most frequent values to compute.
 
     Returns:
-        dict: Dictionary with top, bottom, and frequent values.
+        dict: Results containing top, bottom, and most frequent values for each column.
     """
-    top_values = df[column].nlargest(n)
-    bottom_values = df[column].nsmallest(n)
-    frequent_values = df[column].value_counts().head(n)
+    # Rename columns for easier reference
+    data.rename(columns=columns_of_interest, inplace=True)
 
-    return {
-        'Top': top_values,
-        'Bottom': bottom_values,
-        'Frequent': frequent_values
-    }
+    # Function to compute top, bottom, and most frequent values
+    def compute_stats(series, top_n):
+        top_values = series.nlargest(top_n)
+        bottom_values = series.nsmallest(top_n)
+        most_frequent = series.value_counts().head(top_n)
+        return top_values, bottom_values, most_frequent
 
+    # Iterate over the columns of interest and compute stats
+    results = {}
+    for col, col_alias in columns_of_interest.items():
+        if col_alias in data.columns:
+            print(f"Processing column: {col_alias}")
+            top, bottom, frequent = compute_stats(data[col_alias].dropna(), top_n)
+            results[col_alias] = {
+                'Top Values': top,
+                'Bottom Values': bottom,
+                'Most Frequent': frequent
+            }
 
+    # Display results
+    for metric, stats in results.items():
+        print(f"\nMetric: {metric}")
+        print("Top Values:")
+        print(stats['Top Values'])
+        print("\nBottom Values:")
+        print(stats['Bottom Values'])
+        print("\nMost Frequent:")
+        print(stats['Most Frequent'])
+
+    return results
+    
 def distribution_per_handset(df, metric_column, handset_column):
     """
     Compute the distribution of a metric per handset type.
