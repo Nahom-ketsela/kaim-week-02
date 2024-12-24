@@ -3,6 +3,10 @@ import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.cluster import KMeans
 from scipy.spatial.distance import euclidean
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+
 
 # Aggregate Engagement Metrics
 def aggregate_engagement_metrics(df):
@@ -18,12 +22,12 @@ def aggregate_engagement_metrics(df):
 # Aggregate Experience Metrics
 def aggregate_experience_metrics(df):
     experience_metrics = df.groupby('MSISDN/Number').agg({
-        'Avg RTT DL (ms)': 'mean',   # Replace RTT_DL with Avg RTT DL (ms)
-        'Avg RTT UL (ms)': 'mean',   # Replace RTT_UL with Avg RTT UL (ms)
-        'Avg Bearer TP DL (kbps)': 'mean',   # Replace Throughput_DL with Avg Bearer TP DL (kbps)
-        'Avg Bearer TP UL (kbps)': 'mean',   # Replace Throughput_UL with Avg Bearer TP UL (kbps)
-        'TCP DL Retrans. Vol (Bytes)': 'mean',   # Replace TCP_DL with TCP DL Retrans. Vol (Bytes)
-        'TCP UL Retrans. Vol (Bytes)': 'mean'    # Replace TCP_UL with TCP UL Retrans. Vol (Bytes)
+        'Avg RTT DL (ms)': 'mean',  
+        'Avg RTT UL (ms)': 'mean',   
+        'Avg Bearer TP DL (kbps)': 'mean',   
+        'Avg Bearer TP UL (kbps)': 'mean',   
+        'TCP DL Retrans. Vol (Bytes)': 'mean',   
+        'TCP UL Retrans. Vol (Bytes)': 'mean'    
     }).reset_index()
     return experience_metrics
 
@@ -53,6 +57,19 @@ def calculate_engagement_scores(normalized_df, cluster_labels, kmeans):
     distances = normalized_df.apply(lambda row: euclidean(row, less_engaged_centroid), axis=1)
     return distances
 
+# Calculate Experience Scores
+def calculate_experience_scores(normalized_df, cluster_labels, kmeans):
+    # Identify the worst experience cluster
+    cluster_means = normalized_df.groupby(cluster_labels).mean()
+    worst_experience_cluster = cluster_means.mean(axis=1).idxmax()
+
+    # Centroid of the worst experience cluster
+    worst_experience_centroid = kmeans.cluster_centers_[worst_experience_cluster]
+
+    # Calculate Euclidean distance to the worst experience cluster centroid
+    distances = normalized_df.apply(lambda row: euclidean(row, worst_experience_centroid), axis=1)
+    return distances
+
 # Combine Engagement and Experience Metrics
 def combine_metrics(engagement_metrics, experience_metrics):
     combined_metrics = pd.merge(engagement_metrics, experience_metrics, on='MSISDN/Number')
@@ -79,8 +96,76 @@ def full_analysis_pipeline(data, k=3):
     # Calculate engagement scores
     engagement_scores = calculate_engagement_scores(normalized_df, cluster_labels, kmeans)
     
+    # Calculate experience scores
+    experience_scores = calculate_experience_scores(normalized_df, cluster_labels, kmeans)
+    
     # Add results to combined_metrics
     combined_metrics['Cluster'] = cluster_labels
     combined_metrics['Engagement Score'] = engagement_scores
+    combined_metrics['Experience Score'] = experience_scores
     
     return combined_metrics
+
+# Calculate Satisfaction Scores (average of engagement and experience scores)
+def calculate_satisfaction_scores(engagement_scores, experience_scores):
+    return (engagement_scores + experience_scores) / 2
+
+# Report Top 10 Satisfied Customers
+def top_10_satisfied_customers(combined_metrics):
+    # Calculate satisfaction score
+    combined_metrics['Satisfaction Score'] = calculate_satisfaction_scores(combined_metrics['Engagement Score'], combined_metrics['Experience Score'])
+    
+    # Sort users by satisfaction score in descending order and get top 10
+    top_10 = combined_metrics[['MSISDN/Number', 'Satisfaction Score']].sort_values(by='Satisfaction Score', ascending=False).head(10)
+    
+    return top_10
+
+# Prepare the data for regression model
+def prepare_data_for_regression(combined_metrics):
+    # Define the features (independent variables)
+    features = combined_metrics[['Bearer Id', 'Dur. (ms)', 'Total Traffic (Bytes)', 
+                                 'Avg RTT DL (ms)', 'Avg RTT UL (ms)', 'Avg Bearer TP DL (kbps)', 
+                                 'Avg Bearer TP UL (kbps)', 'TCP DL Retrans. Vol (Bytes)', 'TCP UL Retrans. Vol (Bytes)']]
+    
+    # Target variable: Satisfaction Score
+    target = combined_metrics['Satisfaction Score']
+    
+    return features, target
+
+# Train and evaluate the regression model
+def regression_model(combined_metrics):
+    # Step 1: Prepare the data
+    features, target = prepare_data_for_regression(combined_metrics)
+    
+    # Step 2: Split the data into training and test sets (80% train, 20% test)
+    X_train, X_test, y_train, y_test = train_test_split(features, target, test_size=0.2, random_state=42)
+    
+    # Step 3: Initialize and train the model (Linear Regression)
+    model = LinearRegression()
+    model.fit(X_train, y_train)
+    
+    # Step 4: Make predictions on the test set
+    y_pred = model.predict(X_test)
+    
+    # Step 5: Evaluate the model
+    mse = mean_squared_error(y_test, y_pred)
+    r2 = r2_score(y_test, y_pred)
+    
+    print(f"Mean Squared Error (MSE): {mse}")
+    print(f"R-squared (R2): {r2}")
+    
+    # Return the model and test set results
+    return model, y_test, y_pred
+
+# Example usage of the regression model
+def run_regression_on_combined_metrics(combined_metrics):
+    model, y_test, y_pred = regression_model(combined_metrics)
+    
+    # Print a few predicted vs actual values for comparison
+    results = pd.DataFrame({'Actual': y_test, 'Predicted': y_pred})
+    print("\nPredicted vs Actual Satisfaction Scores (Top 10):")
+    print(results.head(10))
+
+# Assuming 'combined_metrics' is available (after running full_analysis_pipeline)
+run_regression_on_combined_metrics(combined_metrics)
+
