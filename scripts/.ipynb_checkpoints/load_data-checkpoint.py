@@ -70,3 +70,26 @@ def load_data_using_sqlalchemy(query):
     except Exception as e:
         print(f"An error occurred: {e}")
         return None
+
+# Function to export DataFrame to PostgreSQL
+def export_to_postgres(df, table_name):
+    """
+    Exports a DataFrame to a PostgreSQL table.
+
+    :param df: DataFrame to export.
+    :param table_name: Name of the table to create in PostgreSQL.
+    """
+    try:
+        # Create a connection string
+        connection_string = f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+
+        # Create an SQLAlchemy engine
+        engine = create_engine(connection_string)
+
+        # Export DataFrame to PostgreSQL (replace table if it exists)
+        df.to_sql(table_name, engine, if_exists='replace', index=False)
+
+        print(f"Table '{table_name}' successfully created in the database.")
+
+    except Exception as e:
+        print(f"An error occurred while exporting the table: {e}")
