@@ -165,7 +165,3 @@ def run_regression_on_combined_metrics(combined_metrics):
     results = pd.DataFrame({'Actual': y_test, 'Predicted': y_pred})
     print("\nPredicted vs Actual Satisfaction Scores (Top 10):")
     print(results.head(10))
-
-# Assuming 'combined_metrics' is available (after running full_analysis_pipeline)
-run_regression_on_combined_metrics(combined_metrics)
-
