@@ -207,3 +207,13 @@ def run_kmeans_on_combined_metrics(combined_metrics):
     
     # Return the result with the cluster labels
     return combined_metrics_with_clusters
+
+# Function to aggregate average satisfaction & experience scores per cluster
+def aggregate_scores_per_cluster(combined_metrics_with_clusters):
+    # Group by KMeans cluster and calculate the mean of satisfaction and experience scores
+    aggregated_scores = combined_metrics_with_clusters.groupby('KMeans Cluster').agg({
+        'Satisfaction Score': 'mean',
+        'Experience Score': 'mean'
+    }).reset_index()
+    
+    return aggregated_scores
