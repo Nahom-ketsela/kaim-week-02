@@ -157,7 +157,7 @@ def regression_model(combined_metrics):
     # Return the model and test set results
     return model, y_test, y_pred
 
-# Example usage of the regression model
+# usage of the regression model
 def run_regression_on_combined_metrics(combined_metrics):
     model, y_test, y_pred = regression_model(combined_metrics)
     
@@ -165,3 +165,45 @@ def run_regression_on_combined_metrics(combined_metrics):
     results = pd.DataFrame({'Actual': y_test, 'Predicted': y_pred})
     print("\nPredicted vs Actual Satisfaction Scores (Top 10):")
     print(results.head(10))
+
+# k-means(k-2)
+# Step 1: Prepare the Data (combine Engagement and Experience Scores)
+def prepare_data_for_kmeans(combined_metrics):
+    # We assume that combined_metrics has columns 'Engagement Score' and 'Experience Score'
+    scores_data = combined_metrics[['Engagement Score', 'Experience Score']]
+    return scores_data
+
+# Step 2: Normalize the Scores (Engagement and Experience)
+def normalize_scores(scores_data):
+    scaler = MinMaxScaler()
+    normalized_scores = scaler.fit_transform(scores_data)
+    normalized_df = pd.DataFrame(normalized_scores, columns=['Engagement Score', 'Experience Score'])
+    return normalized_df, scaler
+
+# Step 3: Apply K-Means (k=2)
+def run_kmeans_on_scores(normalized_scores, k=2):
+    kmeans = KMeans(n_clusters=k, random_state=42)
+    cluster_labels = kmeans.fit_predict(normalized_scores)
+    return cluster_labels, kmeans
+
+# Step 4: Add Cluster Labels to Combined Metrics
+def add_kmeans_clusters_to_combined_metrics(combined_metrics, cluster_labels):
+    combined_metrics['KMeans Cluster'] = cluster_labels
+    return combined_metrics
+
+# Full Execution for K-Means Clustering on Engagement & Experience Scores
+def run_kmeans_on_combined_metrics(combined_metrics):
+    # Prepare data for K-Means
+    scores_data = prepare_data_for_kmeans(combined_metrics)
+    
+    # Normalize the data
+    normalized_scores, scaler = normalize_scores(scores_data)
+    
+    # Apply K-Means Clustering (k=2)
+    cluster_labels, kmeans = run_kmeans_on_scores(normalized_scores, k=2)
+    
+    # Add the cluster labels to the original combined_metrics DataFrame
+    combined_metrics_with_clusters = add_kmeans_clusters_to_combined_metrics(combined_metrics, cluster_labels)
+    
+    # Return the result with the cluster labels
+    return combined_metrics_with_clusters
